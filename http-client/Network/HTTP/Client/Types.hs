@@ -1,8 +1,8 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP                #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE RankNTypes         #-}
 module Network.HTTP.Client.Types
     ( BodyReader
     , Connection (..)
@@ -40,29 +40,30 @@ module Network.HTTP.Client.Types
     , ProxySecureMode (..)
     ) where
 
-import qualified Data.Typeable as T (Typeable)
-import Network.HTTP.Types
-import Control.Exception (Exception, SomeException, throwIO)
-import Data.Word (Word64)
-import qualified Data.ByteString as S
-import qualified Data.ByteString.Lazy as L
-import Blaze.ByteString.Builder (Builder, fromLazyByteString, fromByteString, toLazyByteString)
-import Data.Int (Int64)
-import Data.Foldable (Foldable)
-import Data.Monoid (Monoid(..))
-import Data.Semigroup (Semigroup(..))
-import Data.String (IsString, fromString)
-import Data.Time (UTCTime)
-import Data.Traversable (Traversable)
-import qualified Data.List as DL
-import Network.Socket (HostAddress)
-import Data.IORef
-import qualified Network.Socket as NS
-import qualified Data.Map as Map
-import Data.Text (Text)
-import Data.Streaming.Zlib (ZlibException)
-import Data.CaseInsensitive as CI
-import Data.KeyedPool (KeyedPool)
+import           Blaze.ByteString.Builder (Builder, fromByteString,
+                                           fromLazyByteString, toLazyByteString)
+import           Control.Exception        (Exception, SomeException, throwIO)
+import qualified Data.ByteString          as S
+import qualified Data.ByteString.Lazy     as L
+import           Data.CaseInsensitive     as CI
+import           Data.Foldable            (Foldable)
+import           Data.Int                 (Int64)
+import           Data.IORef
+import           Data.KeyedPool           (KeyedPool)
+import qualified Data.List                as DL
+import qualified Data.Map                 as Map
+import           Data.Monoid              (Monoid (..))
+import           Data.Semigroup           (Semigroup (..))
+import           Data.Streaming.Zlib      (ZlibException)
+import           Data.String              (IsString, fromString)
+import           Data.Text                (Text)
+import           Data.Time                (UTCTime)
+import           Data.Traversable         (Traversable)
+import qualified Data.Typeable            as T (Typeable)
+import           Data.Word                (Word64)
+import           Network.HTTP.Types
+import           Network.Socket           (HostAddress)
+import qualified Network.Socket           as NS
 
 -- | An @IO@ action that represents an incoming response body coming from the
 -- server. Data provided by this action has already been gunzipped and
@@ -75,13 +76,13 @@ import Data.KeyedPool (KeyedPool)
 type BodyReader = IO S.ByteString
 
 data Connection = Connection
-    { connectionRead :: IO S.ByteString
+    { connectionRead   :: IO S.ByteString
       -- ^ If no more data, return empty.
     , connectionUnread :: S.ByteString -> IO ()
       -- ^ Return data to be read next time.
-    , connectionWrite :: S.ByteString -> IO ()
+    , connectionWrite  :: S.ByteString -> IO ()
       -- ^ Send data to server
-    , connectionClose :: IO ()
+    , connectionClose  :: IO ()
       -- ^ Close connection. Any successive operation on the connection
       -- (except closing) should fail with `ConnectionClosed` exception.
       -- It is allowed to close connection multiple times.
@@ -252,17 +253,17 @@ data HttpExceptionContent
 
 -- This corresponds to the description of a cookie detailed in Section 5.3 \"Storage Model\"
 data Cookie = Cookie
-  { cookie_name :: S.ByteString
-  , cookie_value :: S.ByteString
-  , cookie_expiry_time :: UTCTime
-  , cookie_domain :: S.ByteString
-  , cookie_path :: S.ByteString
-  , cookie_creation_time :: UTCTime
+  { cookie_name             :: S.ByteString
+  , cookie_value            :: S.ByteString
+  , cookie_expiry_time      :: UTCTime
+  , cookie_domain           :: S.ByteString
+  , cookie_path             :: S.ByteString
+  , cookie_creation_time    :: UTCTime
   , cookie_last_access_time :: UTCTime
-  , cookie_persistent :: Bool
-  , cookie_host_only :: Bool
-  , cookie_secure_only :: Bool
-  , cookie_http_only :: Bool
+  , cookie_persistent       :: Bool
+  , cookie_host_only        :: Bool
+  , cookie_secure_only      :: Bool
+  , cookie_http_only        :: Bool
   }
   deriving (Read, Show, T.Typeable)
 
@@ -392,9 +393,9 @@ instance Semigroup RequestBody where
     x0 <> y0 =
         case (simplify x0, simplify y0) of
             (Left (i, x), Left (j, y)) -> RequestBodyBuilder (i + j) (x <> y)
-            (Left x, Right y) -> combine (builderToStream x) y
-            (Right x, Left y) -> combine x (builderToStream y)
-            (Right x, Right y) -> combine x y
+            (Left x, Right y)          -> combine (builderToStream x) y
+            (Right x, Left y)          -> combine x (builderToStream y)
+            (Right x, Right y)         -> combine x y
       where
         combine (Just i, x) (Just j, y) = RequestBodyStream (i + j) (combine' x y)
         combine (_, x) (_, y) = RequestBodyStreamChunked (combine' x y)
@@ -482,32 +483,32 @@ type GivesPopper a = NeedsPopper a -> IO a
 --
 -- Since 0.1.0
 data Request = Request
-    { method :: Method
+    { method                      :: Method
     -- ^ HTTP request method, eg GET, POST.
     --
     -- Since 0.1.0
-    , secure :: Bool
+    , secure                      :: Bool
     -- ^ Whether to use HTTPS (ie, SSL).
     --
     -- Since 0.1.0
-    , host :: S.ByteString
+    , host                        :: S.ByteString
     -- ^ Requested host name, used for both the IP address to connect to and
     -- the @host@ request header.
     --
     -- Since 0.1.0
-    , port :: Int
+    , port                        :: Int
     -- ^ The port to connect to. Also used for generating the @host@ request header.
     --
     -- Since 0.1.0
-    , path :: S.ByteString
+    , path                        :: S.ByteString
     -- ^ Everything from the host to the query string.
     --
     -- Since 0.1.0
-    , queryString :: S.ByteString
+    , queryString                 :: S.ByteString
     -- ^ Query string appended to the path.
     --
     -- Since 0.1.0
-    , requestHeaders :: RequestHeaders
+    , requestHeaders              :: RequestHeaders
     -- ^ Custom HTTP request headers
     --
     -- The Content-Length and Transfer-Encoding headers are set automatically
@@ -532,36 +533,36 @@ data Request = Request
     -- are honoured.
     --
     -- Since 0.1.0
-    , requestBody :: RequestBody
+    , requestBody                 :: RequestBody
     -- ^ Request body to be sent to the server.
     --
     -- Since 0.1.0
-    , proxy :: Maybe Proxy
+    , proxy                       :: Maybe Proxy
     -- ^ Optional HTTP proxy.
     --
     -- Since 0.1.0
-    , hostAddress :: Maybe HostAddress
+    , hostAddress                 :: Maybe HostAddress
     -- ^ Optional resolved host address. May not be used by all backends.
     --
     -- Since 0.1.0
-    , rawBody :: Bool
+    , rawBody                     :: Bool
     -- ^ If @True@, a chunked and\/or gzipped body will not be
     -- decoded. Use with caution.
     --
     -- Since 0.1.0
-    , decompress :: S.ByteString -> Bool
+    , decompress                  :: S.ByteString -> Bool
     -- ^ Predicate to specify whether gzipped data should be
     -- decompressed on the fly (see 'alwaysDecompress' and
     -- 'browserDecompress'). Argument is the mime type.
     -- Default: browserDecompress.
     --
     -- Since 0.1.0
-    , redirectCount :: Int
+    , redirectCount               :: Int
     -- ^ How many redirects to follow when getting a resource. 0 means follow
     -- no redirects. Default value: 10.
     --
     -- Since 0.1.0
-    , checkResponse :: Request -> Response BodyReader -> IO ()
+    , checkResponse               :: Request -> Response BodyReader -> IO ()
     -- ^ Check the response immediately after receiving the status and headers.
     -- This can be useful for throwing exceptions on non-success status codes.
     --
@@ -570,13 +571,13 @@ data Request = Request
     -- behavior (doing nothing).
     --
     -- @since 0.5.0
-    , responseTimeout :: ResponseTimeout
+    , responseTimeout             :: ResponseTimeout
     -- ^ Number of microseconds to wait for a response (see 'ResponseTimeout'
     -- for more information). Default: use 'managerResponseTimeout' (which by
     -- default is 30 seconds).
     --
     -- Since 0.1.0
-    , cookieJar :: Maybe CookieJar
+    , cookieJar                   :: Maybe CookieJar
     -- ^ A user-defined cookie jar.
     -- If 'Nothing', no cookie handling will take place, \"Cookie\" headers
     -- in 'requestHeaders' will be sent raw, and 'responseCookieJar' will be
@@ -584,21 +585,21 @@ data Request = Request
     --
     -- Since 0.1.0
 
-    , requestVersion :: HttpVersion
+    , requestVersion              :: HttpVersion
     -- ^ HTTP version to send to server.
     --
     -- Default: HTTP 1.1
     --
     -- Since 0.4.3
 
-    , onRequestBodyException :: SomeException -> IO ()
+    , onRequestBodyException      :: SomeException -> IO ()
     -- ^ How to deal with exceptions thrown while sending the request.
     --
     -- Default: ignore @IOException@s, rethrow all other exceptions.
     --
     -- Since: 0.4.6
 
-    , requestManagerOverride :: Maybe Manager
+    , requestManagerOverride      :: Maybe Manager
     -- ^ A 'Manager' value that should override whatever @Manager@ value was
     -- passed in to the HTTP request function manually. This is useful when
     -- dealing with implicit global managers, such as in @Network.HTTP.Simple@
@@ -611,7 +612,7 @@ data Request = Request
     --
     -- @since 0.6.2
 
-    , proxySecureMode :: ProxySecureMode
+    , proxySecureMode             :: ProxySecureMode
     -- ^ How to proxy an HTTPS request.
     --
     -- Default: Use HTTP CONNECT.
@@ -656,25 +657,25 @@ instance Show Request where
 
 redactSensitiveHeader :: Header -> Header
 redactSensitiveHeader ("Authorization", _) = ("Authorization", "<REDACTED>")
-redactSensitiveHeader h = h
+redactSensitiveHeader h                    = h
 
 -- | A simple representation of the HTTP response.
 --
 -- Since 0.1.0
 data Response body = Response
-    { responseStatus :: Status
+    { responseStatus    :: Status
     -- ^ Status code of the response.
     --
     -- Since 0.1.0
-    , responseVersion :: HttpVersion
+    , responseVersion   :: HttpVersion
     -- ^ HTTP version used by the server.
     --
     -- Since 0.1.0
-    , responseHeaders :: ResponseHeaders
+    , responseHeaders   :: ResponseHeaders
     -- ^ Response headers sent by the server.
     --
     -- Since 0.1.0
-    , responseBody :: body
+    , responseBody      :: body
     -- ^ Response body sent by the server.
     --
     -- Since 0.1.0
@@ -684,7 +685,7 @@ data Response body = Response
     -- this will always be empty.
     --
     -- Since 0.1.0
-    , responseClose' :: ResponseClose
+    , responseClose'    :: ResponseClose
     -- ^ Releases any resource held by this response. If the response body
     -- has not been fully read yet, doing so after this call will likely
     -- be impossible.
@@ -739,6 +740,10 @@ data ManagerSettings = ManagerSettings
     -- new one.
     --
     -- Since 0.1.0
+    , managerTimeoutException :: SomeException -> Bool
+    -- ^ Exceptions for which we should enforce closing the connection.
+    --
+    -- @since @0.7.3
     , managerWrapException :: forall a. Request -> IO a -> IO a
     -- ^ Action wrapped around all attempted @Request@s, usually used to wrap
     -- up exceptions in library-specific types.
@@ -802,14 +807,16 @@ newtype ProxyOverride = ProxyOverride
 --
 -- Since 0.1.0
 data Manager = Manager
-    { mConns :: KeyedPool ConnKey Connection
-    , mResponseTimeout :: ResponseTimeout
+    { mConns              :: KeyedPool ConnKey Connection
+    , mResponseTimeout    :: ResponseTimeout
     -- ^ Copied from 'managerResponseTimeout'
     , mRetryableException :: SomeException -> Bool
-    , mWrapException :: forall a. Request -> IO a -> IO a
-    , mModifyRequest :: Request -> IO Request
-    , mSetProxy :: Request -> Request
-    , mModifyResponse      :: Response BodyReader -> IO (Response BodyReader)
+    , mTimeoutException   :: SomeException -> Bool
+    -- ^ Copied from 'manaagerTimeoutException'
+    , mWrapException      :: forall a. Request -> IO a -> IO a
+    , mModifyRequest      :: Request -> IO Request
+    , mSetProxy           :: Request -> Request
+    , mModifyResponse     :: Response BodyReader -> IO (Response BodyReader)
     -- ^ See 'managerProxy'
     }
     deriving T.Typeable
@@ -857,8 +864,8 @@ data ConnKey
 --
 -- Since 0.4.9
 data StreamFileStatus = StreamFileStatus
-    { fileSize :: Int64
-    , readSoFar :: Int64
+    { fileSize      :: Int64
+    , readSoFar     :: Int64
     , thisChunkSize :: Int
     }
     deriving (Eq, Show, Ord, T.Typeable)

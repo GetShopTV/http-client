@@ -1,5 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 module Network.HTTP.Client.Manager
     ( ManagerSettings (..)
@@ -20,22 +20,23 @@ module Network.HTTP.Client.Manager
     , useProxySecureWithoutConnect
     ) where
 
-import qualified Data.ByteString.Char8 as S8
+import qualified Data.ByteString.Char8          as S8
 
-import Data.Text (Text)
+import           Data.Text                      (Text)
 
-import Control.Monad (unless)
-import Control.Exception (throwIO, fromException, IOException, Exception (..), handle)
+import           Control.Exception              (Exception (..), IOException,
+                                                 fromException, handle, throwIO)
+import           Control.Monad                  (unless)
 
-import qualified Network.Socket as NS
+import qualified Network.Socket                 as NS
 
-import Network.HTTP.Types (status200)
-import Network.HTTP.Client.Types
-import Network.HTTP.Client.Connection
-import Network.HTTP.Client.Headers (parseStatusHeaders)
-import Network.HTTP.Proxy
-import Data.KeyedPool
-import Data.Maybe (isJust)
+import           Data.KeyedPool
+import           Data.Maybe                     (isJust)
+import           Network.HTTP.Client.Connection
+import           Network.HTTP.Client.Headers    (parseStatusHeaders)
+import           Network.HTTP.Client.Types
+import           Network.HTTP.Proxy
+import           Network.HTTP.Types             (status200)
 
 -- | A value for the @managerRawConnection@ setting, but also allows you to
 -- modify the underlying @Socket@ to set additional settings. For a motivating
@@ -79,8 +80,12 @@ defaultManagerSettings = ManagerSettings
                     -- we open a new connection under these circumstances, we
                     -- check for the NoResponseDataReceived exception.
                     Just NoResponseDataReceived -> True
-                    Just IncompleteHeaders -> True
-                    _ -> False
+                    Just IncompleteHeaders      -> True
+                    _                           -> False
+    , managerTimeoutException = \e ->
+        case fromException e of
+          Just (HttpExceptionRequest _ ConnectionTimeout) -> True
+          _                                               -> False
     , managerWrapException = \_req ->
         let wrapper se =
                 case fromException se of
@@ -124,6 +129,7 @@ newManager ms = do
             { mConns = keyedPool
             , mResponseTimeout = managerResponseTimeout ms
             , mRetryableException = managerRetryableException ms
+            , mTimeoutException = managerTimeoutException ms
             , mWrapException = managerWrapException ms
             , mModifyRequest = managerModifyRequest ms
             , mModifyResponse = managerModifyResponse ms

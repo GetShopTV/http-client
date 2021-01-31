@@ -1,5 +1,5 @@
+{-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings #-}
 module Network.HTTP.Client.Core
     ( withResponse
     , httpLbs
@@ -14,22 +14,22 @@ module Network.HTTP.Client.Core
     , withConnection
     ) where
 
-import Network.HTTP.Types
-import Network.HTTP.Client.Manager
-import Network.HTTP.Client.Types
-import Network.HTTP.Client.Headers
-import Network.HTTP.Client.Body
-import Network.HTTP.Client.Request
-import Network.HTTP.Client.Response
-import Network.HTTP.Client.Cookies
-import Data.Maybe (fromMaybe, isJust)
-import Data.Time
-import Control.Exception
-import qualified Data.ByteString.Lazy as L
-import Data.Monoid
-import Control.Monad (void)
-import System.Timeout (timeout)
-import Data.KeyedPool
+import           Control.Exception
+import           Control.Monad                (void)
+import qualified Data.ByteString.Lazy         as L
+import           Data.KeyedPool
+import           Data.Maybe                   (fromMaybe, isJust)
+import           Data.Monoid
+import           Data.Time
+import           Network.HTTP.Client.Body
+import           Network.HTTP.Client.Cookies
+import           Network.HTTP.Client.Headers
+import           Network.HTTP.Client.Manager
+import           Network.HTTP.Client.Request
+import           Network.HTTP.Client.Response
+import           Network.HTTP.Client.Types
+import           Network.HTTP.Types
+import           System.Timeout               (timeout)
 
 -- | Perform a @Request@ using a connection acquired from the given @Manager@,
 -- and then provide the @Response@ to the given function. This function is
@@ -110,6 +110,10 @@ httpRaw' req0 m = do
         Left e | managedReused mconn && mRetryableException m e -> do
             managedRelease mconn DontReuse
             httpRaw' req m
+        -- Connection timed out and might have been closed.
+               | mTimeoutException m e -> do
+            managedRelease mconn DontReuse
+            throwIO e
         -- Not reused, or a non-retry, so this is a real exception
         Left e -> throwIO e
         -- Everything went ok, so the connection is good. If any exceptions get
@@ -142,7 +146,7 @@ httpRaw' req0 m = do
             ResponseTimeoutDefault ->
                 case mResponseTimeout m of
                     ResponseTimeoutDefault -> Just 30000000
-                    ResponseTimeoutNone -> Nothing
+                    ResponseTimeoutNone    -> Nothing
                     ResponseTimeoutMicro u -> Just u
             ResponseTimeoutNone -> Nothing
             ResponseTimeoutMicro u -> Just u
@@ -192,7 +196,7 @@ getModifiedRequestManager manager0 req0 = do
 responseOpen :: Request -> Manager -> IO (Response BodyReader)
 responseOpen inputReq manager' = do
   case validateHeaders (requestHeaders inputReq) of
-    GoodHeaders -> return ()
+    GoodHeaders       -> return ()
     BadHeaders reason -> throwHttp $ InvalidRequestHeader reason
   (manager, req0) <- getModifiedRequestManager manager' inputReq
   wrapExc req0 $ mWrapException manager req0 $ do
